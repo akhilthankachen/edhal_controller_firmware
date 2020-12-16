@@ -3,12 +3,12 @@
 
 #include <Arduino.h>
 
+// change hardware and software version here
 #define FIRMWARE_VERSION_MAJOR 0
 #define FIRMWARE_VERSION_MINOR 1
 #define FIRMWARE_VERSION_PATCH 0
 #define HARDWARE_VERSION_MAJOR 0
 #define HARDWARE_VERSION_MINOR 1
-
 
 
 class Device{

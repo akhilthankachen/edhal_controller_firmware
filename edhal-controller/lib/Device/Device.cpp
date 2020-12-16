@@ -2,16 +2,39 @@
 
 // constructor definition
 Device::Device(){
-    // fetch custom mac stored in OTP efuse blk3
     esp_err_t rc;
+
+    // fetch custom mac stored in OTP efuse blk3 and use as device id
     rc = esp_efuse_mac_get_custom(device_id);
+
+    // if failed to fetch custom mac
     if(rc != ESP_OK){
         // if custom mac not availble - use default mac as device id
-        esp_efuse_mac_get_default(device_id);
+        rc = esp_efuse_mac_get_default(device_id);
+
+        // failed to fetch default mac
+        if( rc != ESP_OK){
+            device_id[0] = 0x00;
+            device_id[1] = 0x00;
+            device_id[2] = 0x00;
+            device_id[3] = 0x00;
+            device_id[4] = 0x00;
+            device_id[5] = 0x00;
+        }
     }
 
     // fetch default mac used in wifi
-    esp_efuse_mac_get_default(mac);
+    rc = esp_efuse_mac_get_default(mac);
+
+    // if failed to fetch default mac
+    if(rc != ESP_OK){
+        mac[0] = 0x00;
+        mac[1] = 0x00;
+        mac[2] = 0x00;
+        mac[3] = 0x00;
+        mac[4] = 0x00;
+        mac[5] = 0x00; 
+    }
 }
 
 // serial out device init - device id, hardware version, firmware version and bluetooth name
