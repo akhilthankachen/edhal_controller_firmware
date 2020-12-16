@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <Adafruit_BME280.h>
+#include "Device.h"
+
+Device device;
 
 void setup() {
   // put your setup code here, to run once:
@@ -9,11 +12,12 @@ void setup() {
   pinMode(27, OUTPUT);
   pinMode(26, OUTPUT);
 
+  device.serialOutInit();
+
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  Serial.println("hello");
   digitalWrite(13, HIGH);
   digitalWrite(14, HIGH);
   digitalWrite(27, HIGH);
