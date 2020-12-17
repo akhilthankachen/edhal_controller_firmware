@@ -15,8 +15,14 @@ class Device{
     public:
         // constructor
         Device(void);
+        // destructor
+        ~Device(void);
         // display init function
         void serialOutInit(void);
+        // load ble_name from spiffs
+        void loadDeviceBleName(void);
+        // get ble device name in string
+        void getDeviceBleName(char *ble_name_para);
         // get device id in string ( custom mac burned in efuse )
         void getDeviceId(char *device_id_string);
         // get device mac in string ( default mac )
@@ -29,6 +35,7 @@ class Device{
     private:
         uint8_t device_id[6] = {0};
         uint8_t mac[6] = {0};
+        char *ble_name = new char[15];
         int FWV_major = FIRMWARE_VERSION_MAJOR;
         int FWV_minor = FIRMWARE_VERSION_MINOR;
         int FWV_patch = FIRMWARE_VERSION_PATCH;

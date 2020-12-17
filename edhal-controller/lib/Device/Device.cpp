@@ -1,7 +1,9 @@
 #include "Device.h"
+#include <SPIFFS.h>
 
 // constructor definition
 Device::Device(){
+
     esp_err_t rc;
 
     // fetch custom mac stored in OTP efuse blk3 and use as device id
@@ -37,11 +39,17 @@ Device::Device(){
     }
 }
 
+// destructor
+Device::~Device(void){
+    delete[] ble_name;
+}
+
 // serial out device init - device id, hardware version, firmware version and bluetooth name
 void Device::serialOutInit(void){
+
     Serial.println("");
     Serial.println("##################################");
-    Serial.println("Edhal controller initializing....");
+    Serial.println("Edhal controller initializing...");
 
     // serial out hardware version 
     Serial.println("");
@@ -69,15 +77,89 @@ void Device::serialOutInit(void){
     Serial.print("Device Mac : ");
     char *device_mac_string = new char[18];
     getDeviceMac(device_mac_string);
-    Serial.print(device_mac_string);
+    Serial.println(device_mac_string);
+
+    // load ble_name from SPIFFS, only after SPIFFS mounted
+    loadDeviceBleName();
+    // displaying ble name
+    Serial.print("Ble name : ");
+    Serial.print(ble_name);
 
     Serial.println("");
     Serial.println("##################################");
 
+    // delete initialized character arrays
     delete[] device_id_string;
     delete[] device_mac_string;
     delete[] hwv;
     delete[] fwv;
+
+}
+
+// load ble_name from spiffs
+void Device::loadDeviceBleName(void){
+    if(SPIFFS.exists("/ble_name.txt")){
+
+        File file = SPIFFS.open("/ble_name.txt", "r");
+        if(!file){
+            Serial.println("error : failed to open ble_name.txt from spiffs");
+
+            // if SPIFFS fail use a random name each time
+            // generating 6 digit random number 
+            uint32_t random = esp_random();
+            char *firstSix = new char[7];
+            snprintf(firstSix, 7, "%u", random);
+
+            // patching up ble name
+            strcpy(ble_name, "EDHAL-");
+            strcat(ble_name, firstSix);
+
+        }else{
+            // get ble name from file
+            String s = file.readStringUntil('\n');
+            // copy ble name from string to char *
+            strcpy(ble_name, s.c_str());
+        }
+        file.close();
+
+    }else{
+
+        Serial.println();
+        Serial.println("Ble_name.txt not found in spiffs");
+        Serial.println("Generating new one...");
+
+        // generating 6 digit random number 
+        uint32_t random = esp_random();
+        char *firstSix = new char[7];
+        snprintf(firstSix, 7, "%u", random);
+
+        // patching up ble name
+        strcpy(ble_name, "EDHAL-");
+        strcat(ble_name, firstSix);
+
+        // writing ble name to spiffs for later use
+        File file = SPIFFS.open("/ble_name.txt", "w");
+        if(!file){
+            Serial.println("error : failed to open ble_name.txt from spiffs");
+        }else{
+            // file open writing to file
+            int bytesWritten = file.print(ble_name);
+            if (bytesWritten > 0) {
+                Serial.println("Ble name written to spiffs");
+            } else {
+                Serial.println("error : failed to open ble_name.txt from spiffs");
+            }
+        }
+
+        // deleting initialized character pointers
+        delete[] firstSix;
+
+    }
+}
+
+// get ble_name into string
+void Device::getDeviceBleName( char *ble_name_para ){
+
 }
 
 // copy device id as string to the passed character array
@@ -89,6 +171,7 @@ void Device::getDeviceId(char *device_id_string){
 
     strcpy(device_id_string, device_id_string_temp);
 
+    // delete initialized character array
     delete[] device_id_string_temp;
 }
 
@@ -101,6 +184,7 @@ void Device::getDeviceMac(char *device_mac_string){
 
     strcpy(device_mac_string, device_mac_string_temp);
 
+    // delete initialized character array
     delete[] device_mac_string_temp;
 }
 
