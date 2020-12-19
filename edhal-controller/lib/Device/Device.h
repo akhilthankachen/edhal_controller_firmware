@@ -18,7 +18,7 @@ class Device{
         // destructor
         ~Device(void);
         // display init function
-        void serialOutInit(void);
+        void init(void);
         // load ble_name from spiffs
         void loadDeviceBleName(void);
         // get ble device name in string

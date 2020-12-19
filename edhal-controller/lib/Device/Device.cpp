@@ -45,7 +45,7 @@ Device::~Device(void){
 }
 
 // serial out device init - device id, hardware version, firmware version and bluetooth name
-void Device::serialOutInit(void){
+void Device::init(void){
 
     Serial.println("");
     Serial.println("##################################");
@@ -158,8 +158,11 @@ void Device::loadDeviceBleName(void){
 }
 
 // get ble_name into string
+// should be called only after ble name is loaded
+// else error
 void Device::getDeviceBleName( char *ble_name_para ){
-
+    // copy ble name to the passed character array pointer
+    strcpy(ble_name_para, ble_name);
 }
 
 // copy device id as string to the passed character array
