@@ -2,8 +2,12 @@
 #include <Adafruit_BME280.h>
 #include <SPIFFS.h>
 #include "Device.h"
+#include "BleInterface.h"
 
+// device object init
 Device device;
+// ble interface object init
+BleInterface ble;
 
 void setup() { 
   // put your setup code here, to run once:
@@ -19,6 +23,8 @@ void setup() {
   // bluetooth name can be only initialized after SPIFFS mounted
   device.init();
 
+  // start ble with device object passed
+  ble.begin(device);
 
 }
 
