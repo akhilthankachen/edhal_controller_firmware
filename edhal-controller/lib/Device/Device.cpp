@@ -1,5 +1,6 @@
 #include "Device.h"
-#include <SPIFFS.h>
+#include "SPIFFS.h"
+#include "ArduinoJson.h"
 
 // constructor definition
 Device::Device(){
@@ -37,6 +38,7 @@ Device::Device(){
         mac[4] = 0x00;
         mac[5] = 0x00; 
     }
+
 }
 
 // destructor
@@ -87,6 +89,9 @@ void Device::init(void){
 
     Serial.println("");
     Serial.println("##################################");
+
+    // init bme sensor
+    initBmeSensor();
 
     // delete initialized character arrays
     delete[] device_id_string;
@@ -240,4 +245,59 @@ void Device::getDeviceFirmwareVersion(char *firmware_version){
     delete[] minor;
     delete[] patch;
     delete[] version;
+}
+
+// init bme sensor
+void Device::initBmeSensor(void){
+    // try to init bme sensor and store status
+    bme_status = bme.begin(0x76);
+    if(bme_status){
+        Serial.println();
+        Serial.println("BME Sensor Loaded...");
+    }else{
+        Serial.println();
+        Serial.println("Could not load BME Sensor...");
+    }
+}
+
+// get and return bme sensor data
+char *Device::getBmeSensorData(void){
+    
+    // initialized data string variale
+    char *data = new char[96];
+    size_t dataSize = 96;
+
+    // initialize static json object for storing sensor data
+    StaticJsonDocument<96> doc;
+
+    if(bme_status){
+        // set sea level pressure
+        float SEALEVELPRESSURE_HPA = 1013.25;
+        
+        // set data json field
+        doc["s"] = true;
+        doc["t"] = bme.readTemperature();
+        doc["h"] = bme.readHumidity();
+        doc["p"] = bme.readPressure() / 100.0F;
+        doc["a"] = bme.readAltitude(SEALEVELPRESSURE_HPA);
+
+        serializeJson(doc, data, dataSize);
+
+        return data;
+
+    }else{
+        
+        // set data json field
+        doc["s"] = false;
+        doc["t"] = 0;
+        doc["h"] = 0;
+        doc["p"] = 0;
+        doc["a"] = 0;
+
+        serializeJson(doc, data, dataSize);
+
+        return data;
+    }
+
+    delete[] data;
 }

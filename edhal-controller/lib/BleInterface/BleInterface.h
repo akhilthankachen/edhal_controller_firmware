@@ -36,14 +36,19 @@ class BleInterface{
         ~BleInterface(void);
         // ble start function
         void begin( Device device );
-    private:
+        // notify sensor data
+        void notifySensorData(void);
 
+    private:
+    
+        Device deviceObj;
         bool deviceConnected = false;
         BLEServer *pServer = NULL;
         BLEService *pConnectService = NULL;
-        BLECharacteristic *pIdCharacteristic = NULL;
-
-
+        BLECharacteristic *pIDCharacteristic = NULL;
+        BLECharacteristic *pVCharacteristic = NULL;
+        BLEService *pSensorService = NULL;
+        BLECharacteristic *pBMECharacteristic = NULL;
 };
 
 
