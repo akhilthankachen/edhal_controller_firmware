@@ -28,13 +28,11 @@ void BleInterface::begin( Device device ){
     deviceObj = device;
 
     // get bluetooth name from device class
-    char *ble_name = new char[15];
-    device.getDeviceBleName(ble_name);
-
+    char *ble_name = device.getDeviceBleName();
+    
     // get device id from device class
-    char *device_id = new char[18];
-    device.getDeviceId(device_id);
-
+    char *device_id = device.getDeviceId();
+    
     // get version from device class
     uint8_t version[5] = {HARDWARE_VERSION_MAJOR, HARDWARE_VERSION_MINOR, FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH};
     
@@ -116,5 +114,8 @@ void BleInterface::notifySensorData(void){
 
     // notify
     pBMECharacteristic->notify();
+
+    // print data
+    Serial.println(data);
 
 }

@@ -32,5 +32,5 @@ void loop() {
   // put your main code here, to run repeatedly:
   // notify sensor data
   ble.notifySensorData();
-  delay(500);
+  delay(2000);
 }

@@ -44,15 +44,15 @@ class Device{
         // load ble_name from spiffs
         void loadDeviceBleName(void);
         // get ble device name in string
-        void getDeviceBleName(char *ble_name_para);
+        char* getDeviceBleName(void);
         // get device id in string ( custom mac burned in efuse )
-        void getDeviceId(char *device_id_string);
+        char* getDeviceId(void);
         // get device mac in string ( default mac )
-        void getDeviceMac(char *device_mac_string);
+        char* getDeviceMac(void);
         // get device hardware version in string ( dotted format )
-        void getDeviceHardwareVersion(char *hardware_version);
+        char* getDeviceHardwareVersion(void);
         // get device software version in string ( dotted format )
-        void getDeviceFirmwareVersion(char *firmware_version);
+        char* getDeviceFirmwareVersion(void);
         // init bme sensor
         void initBmeSensor(void);
         // get bme sensor data

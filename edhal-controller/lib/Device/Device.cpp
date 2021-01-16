@@ -56,29 +56,25 @@ void Device::init(void){
     // serial out hardware version 
     Serial.println("");
     Serial.print("Hardware Version : ");
-    char *hwv = new char[11];
-    getDeviceHardwareVersion(hwv);
+    char *hwv = getDeviceHardwareVersion();
     Serial.print(hwv);
 
     // serial out firmware version 
     Serial.println("");
     Serial.print("Firmware Version : ");
-    char *fwv = new char[17];
-    getDeviceFirmwareVersion(fwv);
+    char *fwv = getDeviceFirmwareVersion();
     Serial.print(fwv);
 
     // serial out device id 
     Serial.println("");
     Serial.print("Device ID : ");
-    char *device_id_string = new char[18];
-    getDeviceId(device_id_string);
+    char *device_id_string = getDeviceId();
     Serial.print(device_id_string);
 
     // serial out device mac
     Serial.println("");
     Serial.print("Device Mac : ");
-    char *device_mac_string = new char[18];
-    getDeviceMac(device_mac_string);
+    char *device_mac_string = getDeviceMac();
     Serial.println(device_mac_string);
 
     // load ble_name from SPIFFS, only after SPIFFS mounted
@@ -165,39 +161,33 @@ void Device::loadDeviceBleName(void){
 // get ble_name into string
 // should be called only after ble name is loaded
 // else error
-void Device::getDeviceBleName( char *ble_name_para ){
+char* Device::getDeviceBleName(void){
     // copy ble name to the passed character array pointer
-    strcpy(ble_name_para, ble_name);
+    return ble_name;
 }
 
 // copy device id as string to the passed character array
-void Device::getDeviceId(char *device_id_string){
+char* Device::getDeviceId(void){
     char *device_id_string_temp = new char[18];
 
     // converting 6 byte hex code mac into string in ':' format
     snprintf(device_id_string_temp, 18, "%02x:%02x:%02x:%02x:%02x:%02x", device_id[0], device_id[1], device_id[2], device_id[3], device_id[4], device_id[5]);
 
-    strcpy(device_id_string, device_id_string_temp);
-
-    // delete initialized character array
-    delete[] device_id_string_temp;
+    return device_id_string_temp;
 }
 
 // copy device mac as string to the passed character array
-void Device::getDeviceMac(char *device_mac_string){
+char* Device::getDeviceMac(void){
     char *device_mac_string_temp = new char[18];
 
     // converting 6 byte hex code mac into string in ':' format
     snprintf(device_mac_string_temp, 18, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-    strcpy(device_mac_string, device_mac_string_temp);
-
-    // delete initialized character array
-    delete[] device_mac_string_temp;
+    return device_mac_string_temp;
 }
 
 // copy hardware version as string to the passed character array
-void Device::getDeviceHardwareVersion(char *hardware_version){
+char* Device::getDeviceHardwareVersion(void){
     // character array initialization
     char *major = new char[5];
     char *minor = new char[5];
@@ -211,16 +201,12 @@ void Device::getDeviceHardwareVersion(char *hardware_version){
     strcpy(version, major);
     strcat(version, ".");
     strcat(version, minor);
-    strcpy(hardware_version, version);
-
-    // delete initialized character arrays
-    delete[] major;
-    delete[] minor;
-    delete[] version;
+    
+    return version;
 }
 
 // copy software version as string to the passed character array
-void Device::getDeviceFirmwareVersion(char *firmware_version){
+char* Device::getDeviceFirmwareVersion(void){
     // character array initialization
     char *major = new char[5];
     char *minor = new char[5];
@@ -238,13 +224,8 @@ void Device::getDeviceFirmwareVersion(char *firmware_version){
     strcat(version, minor);
     strcat(version, ".");
     strcat(version, patch);
-    strcpy(firmware_version, version);
-
-    // delete initialized character arrays
-    delete[] major;
-    delete[] minor;
-    delete[] patch;
-    delete[] version;
+  
+    return version;
 }
 
 // init bme sensor
