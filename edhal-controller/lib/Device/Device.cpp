@@ -89,12 +89,19 @@ void Device::init(void){
     // init bme sensor
     initBmeSensor();
 
-    // delete initialized character arrays
-    delete[] device_id_string;
-    delete[] device_mac_string;
-    delete[] hwv;
-    delete[] fwv;
+    // init RTC
+    initRTC();
 
+    // load config files from spiffs
+    loadChannelConfig(1);
+    loadChannelConfig(2);
+    loadChannelConfig(3);
+    loadChannelConfig(4);
+    loadChannelConfig(5);
+    loadChannelConfig(6);
+    loadChannelConfig(7);
+    loadChannelConfig(8);
+    
 }
 
 // load ble_name from spiffs
@@ -151,6 +158,7 @@ void Device::loadDeviceBleName(void){
                 Serial.println("error : failed to open ble_name.txt from spiffs");
             }
         }
+        file.close();
 
         // deleting initialized character pointers
         delete[] firstSix;
@@ -282,3 +290,237 @@ char *Device::getBmeSensorData(void){
 
     delete[] data;
 }
+
+// init real time clock (DS3231)
+void Device::initRTC(void){
+    // try to start read from rtc
+    rtc_status = rtc.begin();
+    if(rtc_status){
+        Serial.println("RTC loaded...");
+
+        DateTime now = rtc.now();
+
+        Serial.print(now.year());
+        Serial.print('/');
+        Serial.print(now.month(), DEC);
+        Serial.print('/');
+        Serial.print(now.day(), DEC);
+        Serial.print(" (");
+        Serial.print(now.dayOfTheWeek());
+        Serial.print(") ");
+        Serial.print(now.hour(), DEC);
+        Serial.print(':');
+        Serial.print(now.minute(), DEC);
+        Serial.print(':');
+        Serial.print(now.second(), DEC);
+        Serial.println();
+
+    }else{
+        Serial.println("Couldn't load RTC...");
+    }
+
+}
+
+// get date time now
+DateTime Device::getDateTimeNow(void){
+
+    // if only rtc is loaded
+    if(rtc_status){
+        DateTime now = rtc.now();
+        
+        return now;
+    }else{
+        DateTime now = DateTime(0,0,0,0,0,0);
+
+        return now;
+    }
+    
+}
+
+// store config json to spiffs
+void Device::storeChannelConfig(int channel, const char *jsonStr){
+    // convert channel into character
+    char *channelStr = new char[2];
+    snprintf(channelStr, 2, "%i", channel);
+
+    // init file name
+    char *filename = new char[9];
+    strcpy(filename, "/ch");
+    strcat(filename, channelStr);
+    strcat(filename, ".txt");
+
+    // store the new config
+    File file = SPIFFS.open(filename, "w");
+    if(!file){
+        Serial.println("error : failed to open config file from spiffs");
+    }else{
+        // file open writing to file
+        int bytesWritten = file.print(jsonStr);
+        if (bytesWritten > 0) {
+            Serial.println("Config file was written to spiffs");
+        } else {
+            Serial.println("error : failed to open config file from spiffs");
+        }
+    }
+    file.close();
+
+    // delete char pointers
+    delete[] filename;
+    delete[] channelStr;
+
+}
+
+// load config file from SPIFFS
+void Device::loadChannelConfig(int channel){
+    // convert channel into character
+    char *channelStr = new char[2];
+    snprintf(channelStr, 2, "%i", channel);
+
+    // init file name
+    char *filename = new char[9];
+    strcpy(filename, "/ch");
+    strcat(filename, channelStr);
+    strcat(filename, ".txt");
+
+    // init json doc
+    StaticJsonDocument<512> doc;
+
+    if(SPIFFS.exists(filename)){
+        // load the config file
+        File file = SPIFFS.open(filename, "r");
+        if(!file){
+            Serial.println("error : failed to open config file from spiffs (while loading)");
+        }else{
+
+            Serial.println();
+            Serial.print("config file found for channel : ");
+            Serial.println(channel);
+            Serial.println("deserializing ...");
+
+            // get config json from file
+            String s = file.readStringUntil('\n');
+            deserializeJson(doc, s.c_str());
+        }
+        file.close();
+
+    }else{
+        // init json with no mode 
+        doc["c"] = channel;
+        doc["m"] = -1;
+
+        Serial.println();
+        Serial.print("No config file found for channel : ");
+        Serial.println(channel);
+        Serial.println("Initing with no mode json for the channel ...");
+    }
+    
+
+    // copy json to appropriate variable
+    switch(channel){
+        case 1:
+            ch1 = doc;
+            break;
+        case 2:
+            ch2 = doc;
+            break;
+        case 3:
+            ch3 = doc;
+            break;
+        case 4:
+            ch4 = doc;
+            break;
+        case 5:
+            ch5 = doc;
+            break;
+        case 6:
+            ch6 = doc;
+            break;
+        case 7:
+            ch7 = doc;
+            break;
+        case 8:
+            ch8 = doc;
+            break;
+        default:
+            Serial.println("Error: No channel found in the config json while loading");
+    }
+
+    // delete char arrays
+    delete[] filename;
+    delete[] channelStr;
+}
+
+// handle configuration json
+void Device::handleConfigJson(const char *jsonStr){
+    Serial.println();
+    Serial.print("Config received : ");
+    Serial.println(jsonStr);
+
+    // deserilize json
+    StaticJsonDocument<512> doc;
+    deserializeJson(doc, jsonStr);
+    int c = doc["c"];
+    int m = doc["m"];
+
+    int st_h = doc["st"]["h"]; 
+    int st_m = doc["st"]["m"];
+
+    int et_h = doc["et"]["h"];
+    int et_m = doc["et"]["m"];
+
+    int dm = doc["dm"];
+    int ds = doc["ds"];
+    int ut = doc["ut"];
+    int lt = doc["lt"];
+    int uh = doc["uh"];
+    int lh = doc["lh"];
+
+    JsonArray s = doc["s"];
+    int s_0 = s[0]; 
+    int s_1 = s[1];
+    int s_2 = s[2];
+    int s_3 = s[3];
+    int s_4 = s[4];
+    int s_5 = s[5];
+    int s_6 = s[6];
+
+    // store json to appropriate file
+    switch(c){
+        case 1:
+            ch1 = doc;
+            storeChannelConfig(1, jsonStr);
+            break;
+        case 2:
+            ch2 = doc;
+            storeChannelConfig(2, jsonStr);
+            break;
+        case 3:
+            ch3 = doc;
+            storeChannelConfig(3, jsonStr);
+            break;
+        case 4:
+            ch4 = doc;
+            storeChannelConfig(4, jsonStr);
+            break;
+        case 5:
+            ch5 = doc;
+            storeChannelConfig(5, jsonStr);
+            break;
+        case 6:
+            ch6 = doc;
+            storeChannelConfig(6, jsonStr);
+            break;
+        case 7:
+            ch7 = doc;
+            storeChannelConfig(7, jsonStr);
+            break;
+        case 8:
+            ch8 = doc;
+            storeChannelConfig(8, jsonStr);
+            break;
+        default:
+            Serial.println("Error: No channel found in the config json");
+    }
+    
+}
+

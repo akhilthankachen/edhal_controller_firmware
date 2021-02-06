@@ -11,6 +11,18 @@
 #define SERVICE_UUID_SENSOR             "0084cec8-e46c-484a-975a-b2534cfb0674"
 #define CHARACTERISTIC_UUID_BME_DATA    "a72f65f8-9166-403e-b4b1-8a351e716dae"
 
+#define SERVICE_UUID_CHANNEL            "188a838a-58d0-4864-b355-20a91270b3c2"
+#define CHARACTERISTIC_UUID_SETCONFIG   "54d01acb-2d44-41d2-8c3b-ef514ec965db"
+
+// setConfigCustomCallback onwrite function
+void setConfigCustomCallback::onWrite(BLECharacteristic *pCharacteristic){
+    // when a new value is written on this characteristic
+    std::string value = pCharacteristic->getValue();
+
+    // send the string to device class's handleConfigJson function
+    bleObj->deviceObj.handleConfigJson(value.c_str());
+}
+
 // BleInterface class constructor
 BleInterface::BleInterface(void){
 
@@ -68,6 +80,21 @@ void BleInterface::begin( Device device ){
     ////// CONNECT SERVICE BLOCK END //////
     //////////////////////////////////////
 
+    ////// TIMESYNC SERVICE BLOCK START //////
+    //////////////////////////////////////////
+
+    // init timesync service
+    pTimeSyncService = pServer->createService(SERVICE_UUID_TIMESYNC);
+
+    // TimeSync characteristic
+    pTimeSyncCharacteristic = pTimeSyncService->createCharacteristic(
+        CHARACTERISTIC_UUID_TIMESYNC,
+        BLECharacteristic::PROPERTY_WRITE
+    );
+
+    ////// TIMESYNC SERVICE BLOCK END //////
+    ////////////////////////////////////////
+
     ////// SENSOR SERVICE BLOCK START //////
     ////////////////////////////////////////
 
@@ -78,7 +105,8 @@ void BleInterface::begin( Device device ){
     pBMECharacteristic = pSensorService->createCharacteristic(
       CHARACTERISTIC_UUID_BME_DATA,
       BLECharacteristic::PROPERTY_READ | 
-      BLECharacteristic::PROPERTY_NOTIFY 
+      BLECharacteristic::PROPERTY_NOTIFY |
+      BLECharacteristic::PROPERTY_INDICATE
     );
 
     // add discriptor
@@ -87,35 +115,59 @@ void BleInterface::begin( Device device ){
     ////// SENSOR SERVICE BLOCK END //////
     //////////////////////////////////////
 
+    ////// CHANNEL SERVICE BLOCK START //////
+    ////////////////////////////////////////
+
+    // init channel service
+    pChannelService = pServer->createService(SERVICE_UUID_CHANNEL);
+
+    // channel set configuration characteristic
+    pSetConfigCharacteristic = pChannelService->createCharacteristic(
+        CHARACTERISTIC_UUID_SETCONFIG,
+        BLECharacteristic::PROPERTY_WRITE
+    );
+
+    // setting callback for when new value is written
+    pSetConfigCharacteristic->setCallbacks(new setConfigCustomCallback(this));
+
+    ////// CHANNEL SERVICE BLOCK START //////
+    ////////////////////////////////////////
+
 
     // start connect service
     pConnectService->start();
     pSensorService->start();
+    pChannelService->start();
 
 
     //// Start Advertising ////
     pServer->getAdvertising()->addServiceUUID(SERVICE_UUID_CONNECT);
     pServer->getAdvertising()->start();
+    Serial.println();
     Serial.println("Bluetooth Advertising started...");
 
-
-    delete[] ble_name;
-    delete[] device_id;
 }   
 
-// notify sensor data function
-void BleInterface::notifySensorData(void){
-    
-    // get data from bme sensor
-    char* data = deviceObj.getBmeSensorData();
+// last seconds point
+int lastSecond = 0;
 
-    // write sensor data to charcteristic
-    pBMECharacteristic->setValue(data);
+void BleInterface::notifySensorData(int seconds){
+    //notify only in every 10 seconds
+    if( seconds % 10 == 0 && lastSecond != ( seconds / 10 )){
+        // get data from bme sensor
+        char* data = deviceObj.getBmeSensorData();
 
-    // notify
-    pBMECharacteristic->notify();
+        // write sensor data to charcteristic
+        pBMECharacteristic->setValue(data);
 
-    // print data
-    Serial.println(data);
+        // notify
+        pBMECharacteristic->notify();
 
+        // print data
+        Serial.println();
+        Serial.println();
+        Serial.println(data);
+
+        lastSecond = seconds/10;
+    }
 }

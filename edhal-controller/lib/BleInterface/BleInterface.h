@@ -17,19 +17,35 @@ class BLECustomServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       // deviceConnected = true;
       // // code here for when device connects
+      Serial.println();
       Serial.println("Ble device connected");
     };
 
     void onDisconnect(BLEServer* pServer) {
       // deviceConnected = false;
       // // code here for when device disconnects
+      Serial.println();
       Serial.println("Ble device disconnected");
     }
+};
+
+// ble channel set configuration callback
+class setConfigCustomCallback: public BLECharacteristicCallbacks {
+
+  public:
+    setConfigCustomCallback(BleInterface* ble){
+      bleObj = ble;
+    }
+    BleInterface* bleObj;
+    void onWrite(BLECharacteristic *pCharacteristic);
+
 };
 
 class BleInterface{
 
     public:
+        // device class object
+        Device deviceObj;
         // constructor
         BleInterface(void);
         // destructor
@@ -37,11 +53,10 @@ class BleInterface{
         // ble start function
         void begin( Device device );
         // notify sensor data
-        void notifySensorData(void);
+        void notifySensorData(int seconds);
 
     private:
     
-        Device deviceObj;
         bool deviceConnected = false;
         BLEServer *pServer = NULL;
         BLEService *pConnectService = NULL;
@@ -49,6 +64,10 @@ class BleInterface{
         BLECharacteristic *pVCharacteristic = NULL;
         BLEService *pSensorService = NULL;
         BLECharacteristic *pBMECharacteristic = NULL;
+        BLEService *pTimeSyncService = NULL;
+        BLECharacteristic *pTimeSyncCharacteristic = NULL;
+        BLEService *pChannelService = NULL;
+        BLECharacteristic *pSetConfigCharacteristic = NULL;
 };
 
 

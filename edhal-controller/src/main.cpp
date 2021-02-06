@@ -26,11 +26,18 @@ void setup() {
   // start ble with device object passed
   ble.begin(device);
 
+  // print new line
+  Serial.println();
 }
 
+// date time variable to store data from rtc
+DateTime now;
+
 void loop() {
-  // put your main code here, to run repeatedly:
-  // notify sensor data
-  ble.notifySensorData();
-  delay(2000);
+  // get date time from rtc
+  now = device.getDateTimeNow();
+  
+
+  // notify sensor data in every 10 seconds
+  ble.notifySensorData(now.second());
 }
