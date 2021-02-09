@@ -1,18 +1,20 @@
 #include "BleInterface.h"
 #include "Device.h"
 
-#define SERVICE_UUID_CONNECT            "2dacf9b8-8f25-4027-bf0e-9c68b319ef9a"
-#define CHARACTERISTIC_UUID_ID          "c39ac656-9bb5-4498-80a6-b55ca7650c2a"
-#define CHARACTERISTIC_UUID_V           "35636837-b272-471e-852e-679a3b3cc594"
+#define SERVICE_UUID_CONNECT              "2dacf9b8-8f25-4027-bf0e-9c68b319ef9a"
+#define CHARACTERISTIC_UUID_ID            "c39ac656-9bb5-4498-80a6-b55ca7650c2a"
+#define CHARACTERISTIC_UUID_V             "35636837-b272-471e-852e-679a3b3cc594"
 
-#define SERVICE_UUID_TIMESYNC           "ce57aa1b-a763-4e73-b93b-048408ab600d"
-#define CHARACTERISTIC_UUID_TIMESYNC    "26be97a6-2e25-4701-aba3-f7a17a3a1c74"
+#define SERVICE_UUID_TIMESYNC             "ce57aa1b-a763-4e73-b93b-048408ab600d"
+#define CHARACTERISTIC_UUID_TIMESYNC      "26be97a6-2e25-4701-aba3-f7a17a3a1c74"
 
-#define SERVICE_UUID_SENSOR             "0084cec8-e46c-484a-975a-b2534cfb0674"
-#define CHARACTERISTIC_UUID_BME_DATA    "a72f65f8-9166-403e-b4b1-8a351e716dae"
+#define SERVICE_UUID_SENSOR               "0084cec8-e46c-484a-975a-b2534cfb0674"
+#define CHARACTERISTIC_UUID_BME_DATA      "a72f65f8-9166-403e-b4b1-8a351e716dae"
 
-#define SERVICE_UUID_CHANNEL            "188a838a-58d0-4864-b355-20a91270b3c2"
-#define CHARACTERISTIC_UUID_SETCONFIG   "54d01acb-2d44-41d2-8c3b-ef514ec965db"
+#define SERVICE_UUID_CHANNEL              "188a838a-58d0-4864-b355-20a91270b3c2"
+#define CHARACTERISTIC_UUID_SETCONFIG     "54d01acb-2d44-41d2-8c3b-ef514ec965db"
+#define CHARACTERISTIC_UUID_GETSTATE      "a3691268-7c5c-4ef6-bada-128981758bb9"
+#define CHARACTERISTIC_UUID_SETSTATE      "84f771eb-e00b-4dc4-b02d-7f4e99163fe5"
 
 // setConfigCustomCallback onwrite function
 void setConfigCustomCallback::onWrite(BLECharacteristic *pCharacteristic){
@@ -20,7 +22,17 @@ void setConfigCustomCallback::onWrite(BLECharacteristic *pCharacteristic){
     std::string value = pCharacteristic->getValue();
 
     // send the string to device class's handleConfigJson function
-    bleObj->deviceObj.handleConfigJson(value.c_str());
+    bleObj->deviceObj->handleConfigJson(value.c_str());
+}
+
+// getStateCustomCallback onRead function
+void getStateCustomCallback::onRead(BLECharacteristic *pCharacteristic){
+    // get state json from device class
+    char *json = bleObj->deviceObj->getState();
+    // set current state
+    pCharacteristic->setValue(json);
+    // free inited character array
+    free(json);
 }
 
 // BleInterface class constructor
@@ -34,16 +46,16 @@ BleInterface::~BleInterface(void){
 }
 
 // initiate bluetooth interface and start
-void BleInterface::begin( Device device ){
+void BleInterface::begin( Device *device ){
 
     // store device object for later use
     deviceObj = device;
 
     // get bluetooth name from device class
-    char *ble_name = device.getDeviceBleName();
+    char *ble_name = device->getDeviceBleName();
     
     // get device id from device class
-    char *device_id = device.getDeviceId();
+    char *device_id = device->getDeviceId();
     
     // get version from device class
     uint8_t version[5] = {HARDWARE_VERSION_MAJOR, HARDWARE_VERSION_MINOR, FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR, FIRMWARE_VERSION_PATCH};
@@ -104,13 +116,8 @@ void BleInterface::begin( Device device ){
     // bme sensor data charcteristic
     pBMECharacteristic = pSensorService->createCharacteristic(
       CHARACTERISTIC_UUID_BME_DATA,
-      BLECharacteristic::PROPERTY_READ | 
-      BLECharacteristic::PROPERTY_NOTIFY |
-      BLECharacteristic::PROPERTY_INDICATE
+      BLECharacteristic::PROPERTY_READ 
     );
-
-    // add discriptor
-    pBMECharacteristic->addDescriptor(new BLE2902());
 
     ////// SENSOR SERVICE BLOCK END //////
     //////////////////////////////////////
@@ -127,8 +134,16 @@ void BleInterface::begin( Device device ){
         BLECharacteristic::PROPERTY_WRITE
     );
 
+    pGetStateCharacteristic = pChannelService->createCharacteristic(
+        CHARACTERISTIC_UUID_GETSTATE,
+        BLECharacteristic::PROPERTY_READ
+    );
+
     // setting callback for when new value is written
     pSetConfigCharacteristic->setCallbacks(new setConfigCustomCallback(this));
+
+    // getstate callback for when read is called
+    pGetStateCharacteristic->setCallbacks(new getStateCustomCallback(this));
 
     ////// CHANNEL SERVICE BLOCK START //////
     ////////////////////////////////////////
@@ -151,23 +166,41 @@ void BleInterface::begin( Device device ){
 // last seconds point
 int lastSecond = 0;
 
-void BleInterface::notifySensorData(int seconds){
+void BleInterface::notifySensorData(DateTime now){
     //notify only in every 10 seconds
-    if( seconds % 10 == 0 && lastSecond != ( seconds / 10 )){
+    if( now.second() % 10 == 0 && lastSecond != ( now.second() / 10 )){
         // get data from bme sensor
-        char* data = deviceObj.getBmeSensorData();
+        char* data = deviceObj->getBmeSensorData();
 
         // write sensor data to charcteristic
         pBMECharacteristic->setValue(data);
 
         // notify
-        pBMECharacteristic->notify();
+        //pBMECharacteristic->notify();
 
         // print data
         Serial.println();
         Serial.println();
         Serial.println(data);
 
-        lastSecond = seconds/10;
+        lastSecond = now.second()/10;
+
+        Serial.print(now.year());
+        Serial.print('/');
+        Serial.print(now.month(), DEC);
+        Serial.print('/');
+        Serial.print(now.day(), DEC);
+        Serial.print(" (");
+        Serial.print(now.dayOfTheWeek());
+        Serial.print(") ");
+        Serial.print(now.hour(), DEC);
+        Serial.print(':');
+        Serial.print(now.minute(), DEC);
+        Serial.print(':');
+        Serial.print(now.second(), DEC);
+        Serial.println();
+        Serial.println();
+
+        free(data);
     }
 }

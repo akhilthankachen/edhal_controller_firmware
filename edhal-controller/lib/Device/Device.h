@@ -1,7 +1,6 @@
 #ifndef Device_h
 #define Device_h
 
-#include "Arduino.h"
 #include "Adafruit_Sensor.h"
 #include "Adafruit_BME280.h"
 #include "RTClib.h"
@@ -57,6 +56,10 @@ class Device{
         void initBmeSensor(void);
         // get bme sensor data
         char *getBmeSensorData(void);
+        // get temperature alone
+        float getBmeTemperature(void);
+        // get humidity alone
+        float getBmeHumidity(void);
         // init rtc module
         void initRTC(void);
         // get date time now
@@ -68,14 +71,21 @@ class Device{
         // handle configuration json
         void handleConfigJson(const char*);
         // config json of each channel
-        StaticJsonDocument<512> ch1;
-        StaticJsonDocument<512> ch2;
-        StaticJsonDocument<512> ch3;
-        StaticJsonDocument<512> ch4;
-        StaticJsonDocument<512> ch5;
-        StaticJsonDocument<512> ch6;
-        StaticJsonDocument<512> ch7;
-        StaticJsonDocument<512> ch8;
+        char *ch1 = new char[512];
+        char *ch2 = new char[512];
+        char *ch3 = new char[512];
+        char *ch4 = new char[512];
+        char *ch5 = new char[512];
+        char *ch6 = new char[512];
+        char *ch7 = new char[512];
+        char *ch8 = new char[512];
+
+        // get state of specific channel
+        bool getStateOfChannel(int);
+        // toggle channel
+        void toggle(int, DateTime);
+        // get states of configured channel
+        char* getState(void);
 
     private:
         uint8_t device_id[6] = {0};
@@ -91,8 +101,15 @@ class Device{
         bool bme_status;
         bool rtc_status;
 
-        // configurations of channels
-        
+        // channel on time
+        DateTime ch1Time;
+        DateTime ch2Time;
+        DateTime ch3Time;
+        DateTime ch4Time;
+        DateTime ch5Time;
+        DateTime ch6Time;
+        DateTime ch7Time;
+        DateTime ch8Time;
 };
 
 

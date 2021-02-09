@@ -41,19 +41,31 @@ class setConfigCustomCallback: public BLECharacteristicCallbacks {
 
 };
 
+// ble channel get state callback
+class getStateCustomCallback: public BLECharacteristicCallbacks {
+
+  public:
+    getStateCustomCallback(BleInterface* ble){
+      bleObj = ble;
+    }
+    BleInterface* bleObj;
+    void onRead(BLECharacteristic *pCharacteristic);
+
+};
+
 class BleInterface{
 
     public:
         // device class object
-        Device deviceObj;
+        Device *deviceObj;
         // constructor
         BleInterface(void);
         // destructor
         ~BleInterface(void);
         // ble start function
-        void begin( Device device );
+        void begin( Device *device );
         // notify sensor data
-        void notifySensorData(int seconds);
+        void notifySensorData(DateTime);
 
     private:
     
@@ -68,6 +80,9 @@ class BleInterface{
         BLECharacteristic *pTimeSyncCharacteristic = NULL;
         BLEService *pChannelService = NULL;
         BLECharacteristic *pSetConfigCharacteristic = NULL;
+        BLECharacteristic *pGetStateCharacteristic = NULL;
+        BLECharacteristic *pSetStateCharacteristic = NULL;
+
 };
 
 
