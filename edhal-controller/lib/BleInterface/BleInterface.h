@@ -53,6 +53,18 @@ class getStateCustomCallback: public BLECharacteristicCallbacks {
 
 };
 
+// ble channel set state callback
+class setStateCustomCallback: public BLECharacteristicCallbacks {
+
+  public:
+    setStateCustomCallback(BleInterface* ble){
+      bleObj = ble;
+    }
+    BleInterface* bleObj;
+    void onWrite(BLECharacteristic *pCharacteristic);
+
+};
+
 class BleInterface{
 
     public:

@@ -707,4 +707,17 @@ char* Device::getState(){
     return json;
 }
 
+// set state of channel
+void Device::setState(const char* json){
+    // json doc
+    StaticJsonDocument<100> doc;
+    // deserialize
+    deserializeJson(doc, json);
+    // extract channel
+    int channel = doc["c"];
+    // toggle channel
+    DateTime now = getDateTimeNow();
+    toggle(channel, now);
+}
+
 

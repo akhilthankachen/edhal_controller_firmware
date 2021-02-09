@@ -86,6 +86,8 @@ class Device{
         void toggle(int, DateTime);
         // get states of configured channel
         char* getState(void);
+        // set state of channel
+        void setState(const char *);
 
     private:
         uint8_t device_id[6] = {0};

@@ -35,6 +35,15 @@ void getStateCustomCallback::onRead(BLECharacteristic *pCharacteristic){
     free(json);
 }
 
+// setStateCustomCallback onwrite function
+void setStateCustomCallback::onWrite(BLECharacteristic *pCharacteristic){
+    // when a new value is written on this characteristic
+    std::string value = pCharacteristic->getValue();
+
+    // send the string to device class's handleConfigJson function
+    bleObj->deviceObj->setState(value.c_str());
+}
+
 // BleInterface class constructor
 BleInterface::BleInterface(void){
 
@@ -139,11 +148,19 @@ void BleInterface::begin( Device *device ){
         BLECharacteristic::PROPERTY_READ
     );
 
+    pSetStateCharacteristic = pChannelService->createCharacteristic(
+        CHARACTERISTIC_UUID_SETSTATE,
+        BLECharacteristic::PROPERTY_WRITE
+    );
+
     // setting callback for when new value is written
     pSetConfigCharacteristic->setCallbacks(new setConfigCustomCallback(this));
 
     // getstate callback for when read is called
     pGetStateCharacteristic->setCallbacks(new getStateCustomCallback(this));
+
+    // setState callback for when new channel is written
+    pSetStateCharacteristic->setCallbacks(new setStateCustomCallback(this));
 
     ////// CHANNEL SERVICE BLOCK START //////
     ////////////////////////////////////////
