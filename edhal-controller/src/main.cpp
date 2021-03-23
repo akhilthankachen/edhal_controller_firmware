@@ -33,6 +33,14 @@ void setup() {
   pinMode(CHANNEL_6, OUTPUT);
   pinMode(CHANNEL_8, OUTPUT);
 
+  digitalWrite(CHANNEL_1, LOW);
+  digitalWrite(CHANNEL_2, LOW);
+  digitalWrite(CHANNEL_3, LOW);
+  digitalWrite(CHANNEL_4, LOW);
+  digitalWrite(CHANNEL_5, LOW);
+  digitalWrite(CHANNEL_6, LOW);
+  
+
   // start ble with device object passed
   ble.begin(&device);
 
